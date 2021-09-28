@@ -1,10 +1,10 @@
 /**
- *Submitted for verification at BscScan.com on 2021-05-22
+ *Submitted for verification at BscScan.com on 2021-09-14
 */
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity ^0.8.7;
 
 
 /*
@@ -21,107 +21,20 @@ pragma solidity 0.6.12;
     \:\__\         /:/  /        /:/  /       \::/__/       \:\__\    \:\__\                 \::/  /       \:\__\         /:/  /      \/__/        \:\__\    
      \/__/         \/__/         \/__/         ~~            \/__/     \/__/                  \/__/         \/__/         \/__/                     \/__/  
      
-     
-                                                        https://candlegenie.live
+                                                                              
+                                                                            PREDICTION V3
+                                                                              
+                                                                      https://candlegenie.io
 
 
 */
 
 
-// SAFEMATH
-library SafeMath 
-{
-
-    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        uint256 c = a + b;
-        if (c < a) return (false, 0);
-        return (true, c);
-    }
-
-    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        if (b > a) return (false, 0);
-        return (true, a - b);
-    }
-
-    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        if (a == 0) return (true, 0);
-        uint256 c = a * b;
-        if (c / a != b) return (false, 0);
-        return (true, c);
-    }
-
-    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        if (b == 0) return (false, 0);
-        return (true, a / b);
-    }
-
-    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        if (b == 0) return (false, 0);
-        return (true, a % b);
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "SafeMath: addition overflow");
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "SafeMath: subtraction overflow");
-        return a - b;
-    }
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) return 0;
-        uint256 c = a * b;
-        require(c / a == b, "SafeMath: multiplication overflow");
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b > 0, "SafeMath: division by zero");
-        return a / b;
-    }
-
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b > 0, "SafeMath: modulo by zero");
-        return a % b;
-    }
-
-    function sub(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        return a - b;
-    }
-
-
-    function div(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        require(b > 0, errorMessage);
-        return a / b;
-    }
-
-    function mod(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        require(b > 0, errorMessage);
-        return a % b;
-    }
-}
-
 //CONTEXT
 abstract contract Context 
 {
     function _msgSender() internal view virtual returns (address payable) {
-        return msg.sender;
+        return payable(msg.sender);
     }
 
     function _msgData() internal view virtual returns (bytes memory) {
@@ -130,15 +43,35 @@ abstract contract Context
     }
 }
 
+// REENTRANCY GUARD
+abstract contract ReentrancyGuard 
+{
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor() {
+        _status = _NOT_ENTERED;
+    }
+
+    modifier nonReentrant() {
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+        _status = _ENTERED;
+        _;
+        _status = _NOT_ENTERED;
+    }
+}
+
+
 //OWNABLE
 abstract contract Ownable is Context 
 {
-    address private _owner;
+    address public _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    constructor() internal {
-        address msgSender = _msgSender();
+    constructor() { address msgSender = _msgSender();
         _owner = msgSender;
         emit OwnershipTransferred(address(0), msgSender);
     }
@@ -152,12 +85,12 @@ abstract contract Ownable is Context
         _;
     }
 
-    function admin_OwnershipRenounce() public virtual onlyOwner {
+    function OwnershipRenounce() public virtual onlyOwner {
         emit OwnershipTransferred(_owner, address(0));
         _owner = address(0);
     }
 
-    function admin_OwnershipTransfer(address newOwner) public virtual onlyOwner {
+    function OwnershipTransfer(address newOwner) public virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
@@ -174,7 +107,7 @@ abstract contract Pausable is Context
 
     bool private _paused;
 
-    constructor() internal {
+    constructor() {
         _paused = false;
     }
 
@@ -205,55 +138,26 @@ abstract contract Pausable is Context
     }
 }
 
-//INTERFACE
-interface AggregatorV3Interface 
+
+//PREDICTIONS
+contract CandleGeniePredictionV3 is Ownable, Pausable, ReentrancyGuard 
 {
-    function decimals() external view returns (uint8);
 
-    function description() external view returns (string memory);
-
-    function version() external view returns (uint256);
-
-    function getRoundData(uint80 _roundId)
-        external
-        view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
-
-    function latestRoundData()
-        external
-        view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
-}
-
-//CANDLE GENIE
-contract CandleGenie is Ownable, Pausable {
-    using SafeMath for uint256;
-
-    struct Round {
+    struct Round 
+    {
         uint256 epoch;
-        uint256 startBlock;
-        uint256 lockBlock;
-        uint256 endBlock;
-        int256 lockPrice;
-        int256 closePrice;
-        uint256 totalAmount;
         uint256 bullAmount;
         uint256 bearAmount;
         uint256 rewardBaseCalAmount;
         uint256 rewardAmount;
-        bool oracleCalled;
+        int256 lockPrice;
+        int256 closePrice;
+        uint32 startTimestamp;
+        uint32 lockTimestamp;
+        uint32 closeTimestamp;
+        uint32 lockPriceTimestamp;
+        uint32 closePriceTimestamp;
+        bool closed;
         bool cancelled;
     }
 
@@ -264,90 +168,61 @@ contract CandleGenie is Ownable, Pausable {
         uint256 amount;
         bool claimed; // default false
     }
-
-    mapping(uint256 => Round) public rounds;
-    mapping(uint256 => mapping(address => BetInfo)) public bet;
-    mapping(address => uint256[]) public bets;
+    
+    mapping(uint256 => Round) public Rounds;
+    mapping(uint256 => mapping(address => BetInfo)) public Bets;
+    mapping(address => uint256[]) public UserBets;
+    mapping(address=>bool) internal Blacklist;
+        
     uint256 public currentEpoch;
-    uint256 public currentEpochStart;
-    uint256 public currentEpochLock;
-    uint256 public currentEpochEnd;
-    uint256 public intervalBlocks;
-    uint256 public bufferBlocks;
-    address public adminAddress;
+        
     address public operatorAddress;
-    uint256 public treasuryAmount;
-    AggregatorV3Interface internal oracle;
-    uint256 public oracleLatestRoundId;
+    string public priceSource;
 
-    uint256 public constant TOTAL_RATE = 100; // 100%
-    uint256 public rewardRate = 90; // 90%
-    uint256 public treasuryRate = 10; // 10%
-    uint256 public minBetAmount;
-    uint256 public oracleUpdateAllowance; // seconds
+    // Defaults
+    uint256 public rewardRate = 97; // Prize reward rate
+    uint256 constant internal minimumRewardRate = 90; // Minimum reward rate 90%
+    uint256 public intervalSeconds = 300;
+    uint256 public minBetAmount = 1000000000000000;
+    uint256 public bufferSeconds = 30;
 
     bool public startOnce = false;
     bool public lockOnce = false;
 
-    event StartRound(uint256 indexed epoch, uint256 blockNumber);
-    event LockRound(uint256 indexed epoch, uint256 blockNumber, int256 price);
-    event EndRound(uint256 indexed epoch, uint256 blockNumber, int256 price);
-    event CancelRound(uint256 indexed epoch);
-    event BetBull(address indexed sender, uint256 indexed currentEpoch, uint256 amount);
-    event BetBear(address indexed sender, uint256 indexed currentEpoch, uint256 amount);
-    event Claim(address indexed sender, uint256 indexed currentEpoch, uint256 amount);
-    event ClaimTreasury(uint256 amount);
-    event ClaimReserve(uint256 amount);
-    event RewardUser(address user, uint256 amount);
-    event RatesUpdated(uint256 indexed epoch, uint256 rewardRate, uint256 treasuryRate);
-    event MinBetAmountUpdated(uint256 indexed epoch, uint256 minBetAmount);
-
+    event BetBear(address indexed sender, uint256 indexed epoch, uint256 amount);
+    event BetBull(address indexed sender, uint256 indexed epoch, uint256 amount);
+    event HouseBet(address indexed sender, uint256 indexed epoch, uint256 bullAmount, uint256 bearAmount);
+    event LockRound(uint256 indexed epoch, int256 price, uint32 timestamp);
+    event EndRound(uint256 indexed epoch, int256 price, uint32 timestamp);
+    event Claim(address indexed sender, uint256 indexed epoch, uint256 amount);
     
+    event StartRound(uint256 indexed epoch);
+    event CancelRound(uint256 indexed epoch);
+    event Pause(uint256 indexed epoch);
+    event Unpause(uint256 indexed epoch);
+          
     event RewardsCalculated(
         uint256 indexed epoch,
         uint256 rewardBaseCalAmount,
-        uint256 rewardAmount,
-        uint256 treasuryAmount
+        uint256 rewardAmount
     );
-    event Pause(uint256 epoch);
-    event Unpause(uint256 epoch);
 
-    constructor(
-        AggregatorV3Interface _oracle,
-        address _adminAddress,
-        address _operatorAddress,
-        uint256 _intervalBlocks,
-        uint256 _bufferBlocks,
-        uint256 _minBetAmount,
-        uint256 _oracleUpdateAllowance
-    ) public {
-        oracle = _oracle;
-        adminAddress = _adminAddress;
+    event InjectFunds(address indexed sender);
+    event MinBetAmountUpdated(uint256 indexed epoch, uint256 minBetAmount);
+    event BufferAndIntervalSecondsUpdated(uint256 bufferSeconds, uint256 intervalSeconds);
+    event NewPriceSource(string priceSource);
+
+    constructor(address _operatorAddress) 
+    {
         operatorAddress = _operatorAddress;
-        intervalBlocks = _intervalBlocks;
-        bufferBlocks = _bufferBlocks;
-        minBetAmount = _minBetAmount;
-        oracleUpdateAllowance = _oracleUpdateAllowance;
     }
 
-    modifier onlyAdmin() 
+    modifier onlyOwnerOrOperator() 
     {
-        require(msg.sender == adminAddress, "admins only");
+        require(msg.sender == _owner || msg.sender == operatorAddress, "Only owner or operator can call this function");
         _;
     }
 
-    modifier onlyAdminOrOperator() 
-    {
-        require(msg.sender == adminAddress || msg.sender == operatorAddress, "admin | operator: wut?");
-        _;
-    }
-
-
-    modifier onlyOperator() 
-    {
-        require(msg.sender == operatorAddress, "operators only");
-        _;
-    }
 
     modifier notContract() 
     {
@@ -358,137 +233,88 @@ contract CandleGenie is Ownable, Pausable {
 
     // INTERNAL FUNCTIONS ---------------->
     
-     /**
-     * @dev Start round
-     * Previous round n-2 must end
-     */
     function _safeStartRound(uint256 epoch) internal 
     {
-        require(startOnce, "Can only run after startRound is triggered");
-        require(rounds[epoch - 2].endBlock != 0, "Can only start round after round n-2 has ended");
-        require(block.number >= rounds[epoch - 2].endBlock, "Can only start new round after round n-2 endBlock");
-        _startRound(epoch);
-    }
 
-    function _startRound(uint256 epoch) internal 
-    {
-        Round storage round = rounds[epoch];
-        round.startBlock = block.number;
-        round.lockBlock = block.number.add(intervalBlocks);
-        round.endBlock = block.number.add(intervalBlocks * 2);
+        Round storage round = Rounds[epoch];
+        round.startTimestamp = uint32(block.timestamp);
+        round.lockTimestamp =  uint32(block.timestamp + intervalSeconds);
+        round.closeTimestamp =  uint32(block.timestamp + (2 * intervalSeconds));
         round.epoch = epoch;
-        round.totalAmount = 0;
 
-        currentEpochStart = round.startBlock;
-        currentEpochLock = round.lockBlock;
-        currentEpochEnd = round.endBlock;
-           
-        emit StartRound(epoch, block.number);
-    }
-    
-    function _cancelRound(uint256 epoch, bool oracleLock) internal 
-    {
-        Round storage round = rounds[epoch];
-        round.cancelled = true;
-        round.oracleCalled = oracleLock;
-        emit CancelRound(epoch);
-    }
-    
-    function _safeCancelRound(uint256 epoch, bool oracleLock) internal 
-    {
-        _cancelRound(epoch, oracleLock);
+        emit StartRound(epoch);
     }
 
-    /**
-     * @dev Lock round
-     */
-    function _safeLockRound(uint256 epoch, int256 price) internal 
+    function _safeLockRound(uint256 epoch, int256 price, uint32 timestamp) internal 
     {
-        require(rounds[epoch].startBlock != 0, "Can only lock round after round has started");
-        require(block.number >= rounds[epoch].lockBlock, "Can only lock round after lockBlock");
-        require(block.number <= rounds[epoch].endBlock, "Can only lock before end block");
+        require(Rounds[epoch].startTimestamp != 0, "Can only lock round after round has started");
+        require(block.timestamp >= Rounds[epoch].lockTimestamp, "Can only lock round after lock timestamp");
+        require(block.timestamp <= Rounds[epoch].closeTimestamp, "Can only lock before end timestamp");
         
-        _lockRound(epoch, price);
-    }
-
-    function _lockRound(uint256 epoch, int256 price) internal 
-    {
-        Round storage round = rounds[epoch];
+        Round storage round = Rounds[epoch];
         round.lockPrice = price;
+        round.lockPriceTimestamp = timestamp;
 
-        emit LockRound(epoch, block.number, round.lockPrice);
+        emit LockRound(epoch, price, timestamp);
     }
 
-    /**
-     * @dev End round
-     */
-    function _safeEndRound(uint256 epoch, int256 price) internal 
-    {
-        require(rounds[epoch].lockBlock != 0, "Can only end round after round has locked");
-        require(block.number >= rounds[epoch].endBlock, "Can only end round after endBlock");
-        _endRound(epoch, price);
-    }
 
-    function _endRound(uint256 epoch, int256 price) internal 
+    function _safeEndRound(uint256 epoch, int256 price, uint32 timestamp) internal 
     {
-        Round storage round = rounds[epoch];
+        require(Rounds[epoch].lockTimestamp != 0, "Can only end round after round has locked");
+        require(block.timestamp >= Rounds[epoch].closeTimestamp, "Can only end round after endBlock");
+        
+        Round storage round = Rounds[epoch];
         round.closePrice = price;
-        round.oracleCalled = true;
-
-        emit EndRound(epoch, block.number, round.closePrice);
+        round.closePriceTimestamp = timestamp;
+        round.closed = true;
+        
+        emit EndRound(epoch, price, timestamp);
     }
 
-    /**
-     * @dev Calculate rewards for round
-     */
     function _calculateRewards(uint256 epoch) internal 
     {
-        require(rewardRate.add(treasuryRate) == TOTAL_RATE, "rewardRate and treasuryRate must add up to TOTAL_RATE");
-        require(rounds[epoch].rewardBaseCalAmount == 0 && rounds[epoch].rewardAmount == 0, "Rewards calculated");
-        Round storage round = rounds[epoch];
+        
+        require(Rounds[epoch].rewardBaseCalAmount == 0 && Rounds[epoch].rewardAmount == 0, "Rewards calculated");
+        Round storage round = Rounds[epoch];
         uint256 rewardBaseCalAmount;
         uint256 rewardAmount;
-        uint256 treasuryAmt;
+
+        uint256 totalAmount = round.bullAmount + round.bearAmount;
+        
         // Bull wins
-        if (round.closePrice > round.lockPrice) {
+        if (round.closePrice > round.lockPrice) 
+        {
             rewardBaseCalAmount = round.bullAmount;
-            rewardAmount = round.totalAmount.mul(rewardRate).div(TOTAL_RATE);
-            treasuryAmt = round.totalAmount.mul(treasuryRate).div(TOTAL_RATE);
+            rewardAmount = totalAmount * rewardRate / 100;
         }
         // Bear wins
-        else if (round.closePrice < round.lockPrice) {
+        else if (round.closePrice < round.lockPrice) 
+        {
             rewardBaseCalAmount = round.bearAmount;
-            rewardAmount = round.totalAmount.mul(rewardRate).div(TOTAL_RATE);
-            treasuryAmt = round.totalAmount.mul(treasuryRate).div(TOTAL_RATE);
+            rewardAmount = totalAmount * rewardRate / 100;
+
         }
         // House wins
-        else {
+        else 
+        {
             rewardBaseCalAmount = 0;
             rewardAmount = 0;
-            treasuryAmt = round.totalAmount;
         }
         round.rewardBaseCalAmount = rewardBaseCalAmount;
         round.rewardAmount = rewardAmount;
 
-        // Add to treasury
-        treasuryAmount = treasuryAmount.add(treasuryAmt);
-
-        emit RewardsCalculated(epoch, rewardBaseCalAmount, rewardAmount, treasuryAmt);
+        emit RewardsCalculated(epoch, rewardBaseCalAmount, rewardAmount);
     }
 
-    /**
-     * @dev Get latest recorded price from oracle
-     * If it falls below allowed buffer or has not updated, it would be invalid
-     */
-    function _getPriceFromOracle() internal returns (int256) 
+    function _safeCancelRound(uint256 epoch, bool cancelled, bool closed) internal 
     {
-        uint256 leastAllowedTimestamp = block.timestamp.add(oracleUpdateAllowance);
-        (uint80 roundId, int256 price, , uint256 timestamp, ) = oracle.latestRoundData();
-        require(timestamp <= leastAllowedTimestamp, "Oracle update exceeded max timestamp allowance");
-        oracleLatestRoundId = uint256(roundId);
-        return price;
+        Round storage round = Rounds[epoch];
+        round.cancelled = cancelled;
+        round.closed = closed;
+        emit CancelRound(epoch);
     }
-    
+
 
     function _safeTransferBNB(address to, uint256 value) internal 
     {
@@ -506,92 +332,102 @@ contract CandleGenie is Ownable, Pausable {
         return size > 0;
     }
 
-    /**
-     * @dev Determine if a round is valid for receiving bets
-     * Round must have started and locked
-     * Current block must be within startBlock and endBlock
-     */
     function _bettable(uint256 epoch) internal view returns (bool) 
     {
         return
-            rounds[epoch].startBlock != 0 &&
-            rounds[epoch].lockBlock != 0 &&
-            block.number > rounds[epoch].startBlock &&
-            block.number < rounds[epoch].lockBlock;
+            Rounds[epoch].startTimestamp != 0 &&
+            Rounds[epoch].lockTimestamp != 0 &&
+            block.timestamp > Rounds[epoch].startTimestamp &&
+            block.timestamp < Rounds[epoch].lockTimestamp;
     }
     
     // EXTERNAL FUNCTIONS ---------------->
     
-    /**
-     * @dev set admin address
-     * callable by owner
-     */
-    function admin_SetAdmin(address _adminAddress) external onlyOwner 
-    {
-        require(_adminAddress != address(0), "Cannot be zero address");
-        adminAddress = _adminAddress;
-    }
-
-    /**
-     * @dev set operator address
-     * callable by admin
-     */
-    function admin_SetOperator(address _operatorAddress) external onlyAdmin 
+    function owner_SetOperator(address _operatorAddress) external onlyOwner 
     {
         require(_operatorAddress != address(0), "Cannot be zero address");
         operatorAddress = _operatorAddress;
     }
 
-    /**
-     * @dev Claim all rewards in treasury
-     * callable by admin
-     */
-    function admin_ClaimTreasury() external onlyAdmin 
+    function owner_FundsInject() external payable onlyOwner 
     {
-        uint256 currentTreasuryAmount = treasuryAmount;
-        treasuryAmount = 0;
-        _safeTransferBNB(adminAddress, currentTreasuryAmount);
-
-        emit ClaimTreasury(currentTreasuryAmount);
-    }
-
-
-    /**
-     * @dev Claim requested amounts of reserve
-     * callable by admin
-     */
-    function admin_ClaimReserve(uint256 value) external onlyAdmin 
-    {
-        _safeTransferBNB(adminAddress,  value);
-        emit ClaimReserve(value);
+        emit InjectFunds(msg.sender);
     }
     
-     /**
-     * @dev Reward any user given amount
-     * callable by admin
-     */
-    function admin_RewardUser(address user, uint256 value) external onlyAdmin 
+    function owner_FundsExtract(uint256 value) external onlyOwner 
+    {
+        _safeTransferBNB(_owner,  value);
+    }
+    
+    function owner_RewardUser(address user, uint256 value) external onlyOwner 
     {
         _safeTransferBNB(user,  value);
-        emit RewardUser(user, value);
+    }
+    
+    function owner_BlackListInsert(address _user) public onlyOwner {
+        require(!Blacklist[_user], "Address already blacklisted");
+        Blacklist[_user] = true;
+    }
+    
+    function owner_BlackListRemove(address _user) public onlyOwner {
+        require(Blacklist[_user], "Address already whitelisted");
+        Blacklist[_user] = false;
+    }
+   
+    function owner_ChangePriceSource(string memory _priceSource) external onlyOwner 
+    {
+        require(bytes(_priceSource).length > 0, "Price source can not be empty");
+        
+        priceSource = _priceSource;
+        emit NewPriceSource(_priceSource);
+    }
+
+
+    function owner_HouseBet(uint256 bullAmount, uint256 bearAmount) external onlyOwnerOrOperator whenNotPaused notContract 
+    {
+        require(_bettable(currentEpoch), "Round not bettable");
+        require(address(this).balance >= bullAmount + bearAmount, "Contract balance must be greater than house bet totals");
+
+        // Putting Bull Bet
+        if (bullAmount > 0)
+        {
+            // Update round data
+            Round storage round = Rounds[currentEpoch];
+            round.bullAmount += bullAmount;
+    
+            // Update user data
+            BetInfo storage betInfo = Bets[currentEpoch][address(this)];
+            betInfo.position = Position.Bull;
+            betInfo.amount = bullAmount;
+            UserBets[address(this)].push(currentEpoch);
+        }
+
+        // Putting Bear Bet
+        if (bearAmount > 0)
+        {
+            // Update round data
+            Round storage round = Rounds[currentEpoch];
+            round.bearAmount += bearAmount;
+    
+            // Update user data
+            BetInfo storage betInfo = Bets[currentEpoch][address(this)];
+            betInfo.position = Position.Bear;
+            betInfo.amount = bearAmount;
+            UserBets[address(this)].push(currentEpoch);
+        }
+        
+        emit HouseBet(address(this), currentEpoch, bullAmount, bearAmount);
     }
     
 
-    /**
-     * @dev called by the admin to pause, triggers stopped state
-     */
-    function control_Pause() public onlyAdminOrOperator whenNotPaused 
+    function control_Pause() public onlyOwnerOrOperator whenNotPaused 
     {
         _pause();
 
         emit Pause(currentEpoch);
     }
 
-    /**
-     * @dev called by the admin to unpause, returns to normal state
-     * Reset game state. Once paused, the rounds would need to be kickstarted by resume call
-     */
-    function control_Resume() public onlyAdmin whenPaused 
+    function control_Resume() public onlyOwnerOrOperator whenPaused 
     {
         startOnce = false;
         lockOnce = false;
@@ -600,132 +436,73 @@ contract CandleGenie is Ownable, Pausable {
         emit Unpause(currentEpoch);
     }
 
-    /**
-     * @dev Start round
-     */
-    function control_RoundStart() external onlyOperator whenNotPaused 
+    function control_RoundStart() external onlyOwnerOrOperator whenNotPaused 
     {
         require(!startOnce, "Can only run startRound once");
 
         currentEpoch = currentEpoch + 1;
-        _startRound(currentEpoch);
+        _safeStartRound(currentEpoch);
         startOnce = true;
     }
 
-    /**
-     * @dev Lock round
-     */
-    function control_RoundLock() external onlyOperator whenNotPaused 
+
+    function control_RoundLock(int256 price, uint32 timestamp) external onlyOwnerOrOperator whenNotPaused 
     {
         require(startOnce, "Can only run after startRound is triggered");
         require(!lockOnce, "Can only run lockRound once");
-    
-        int256 currentPrice = _getPriceFromOracle();
-        _safeLockRound(currentEpoch, currentPrice);
 
-        currentEpoch = currentEpoch + 1;
-        _startRound(currentEpoch);
-        lockOnce = true;
-    }
-    
-        /**
-     * @dev Start the next round n, lock price for round n-1, end round n-2
-     */
-    function control_RoundExecute() external onlyOperator whenNotPaused 
-    {
-        require(
-            startOnce && lockOnce,
-            "Can only run after startRound and lockRound is triggered"
-        );
+        _safeLockRound(currentEpoch, price, timestamp);
 
-        int256 currentPrice = _getPriceFromOracle();
-        // CurrentEpoch refers to previous round (n-1)
-        _safeLockRound(currentEpoch, currentPrice);
-        _safeEndRound(currentEpoch - 1, currentPrice);
-        _calculateRewards(currentEpoch - 1);
-
-        // Increment currentEpoch to current round (n)
         currentEpoch = currentEpoch + 1;
         _safeStartRound(currentEpoch);
+        lockOnce = true;
+        
     }
-
-    /**
-     * @dev Cancel round
-     */
-    function control_RoundCancel(uint256 epoch, bool oracleLock) external onlyAdmin 
+    
+    function control_RoundExecute(int256 price, uint32 timestamp) external onlyOwnerOrOperator whenNotPaused 
     {
-        _safeCancelRound(epoch, oracleLock);
+                                                                                                         
+        require(startOnce && lockOnce,"Can only run after startRound and lockRound is triggered");
+        require(Rounds[currentEpoch - 2].closeTimestamp != 0, "Can only start round after round n-2 has ended");
+        require(block.timestamp >= Rounds[currentEpoch - 2].closeTimestamp, "Can only start new round after round n-2 endBlock");
+        
+        // CurrentEpoch refers to previous round (n-1)
+        _safeLockRound(currentEpoch, price, timestamp);                                     
+        _safeEndRound(currentEpoch - 1, price, timestamp);                                  
+        
+        _calculateRewards(currentEpoch - 1);                                                            
+      
+        // Increment currentEpoch to current round (n)
+        currentEpoch = currentEpoch + 1;                                                                
+      
+        _safeStartRound(currentEpoch);                                                                 
+           
     }
 
 
-    /**
-     * @dev set interval blocks
-     * callable by admin
-     */
-    function settings_SetIntervalBlocks(uint256 _intervalBlocks) external onlyAdmin 
+    function control_RoundCancel(uint256 epoch, bool cancelled, bool closed) external onlyOwner 
     {
-        intervalBlocks = _intervalBlocks;
+        _safeCancelRound(epoch, cancelled, closed);
     }
 
-    /**
-     * @dev set buffer blocks
-     * callable by admin
-     */
-    function settings_setBufferBlocks(uint256 _bufferBlocks) external onlyAdmin {
-        require(_bufferBlocks <= intervalBlocks, "Cannot be more than intervalBlocks");
-        bufferBlocks = _bufferBlocks;
-    }
 
-    /**
-     * @dev set Oracle address
-     * callable by admin
-     */
-    function settings_SetOracle(address _oracle) external onlyAdmin 
+    function setBufferAndIntervalSeconds(uint256 _bufferSeconds, uint256 _intervalSeconds) external onlyOwner
     {
-        require(_oracle != address(0), "Cannot be zero address");
-        oracle = AggregatorV3Interface(_oracle);
+        require(_bufferSeconds < _intervalSeconds, "BufferSeconds must be inferior to intervalSeconds");
+        bufferSeconds = _bufferSeconds;
+        intervalSeconds = _intervalSeconds;
+        emit BufferAndIntervalSecondsUpdated(_bufferSeconds, _intervalSeconds);
     }
 
-    /**
-     * @dev set oracle update allowance
-     * callable by admin
-     */
-    function settings_SetOracleUpdateAllowance(uint256 _oracleUpdateAllowance) external onlyAdmin 
-    {
-        oracleUpdateAllowance = _oracleUpdateAllowance;
-    }
 
-    /**
-     * @dev set reward rate
-     * callable by admin
-     */
-    function settings_SetRewardRate(uint256 _rewardRate) external onlyAdmin 
+    function settings_SetRewardRate(uint256 _rewardRate) external onlyOwner 
     {
-        require(_rewardRate <= TOTAL_RATE, "rewardRate cannot be more than 100%");
+        require(_rewardRate >= minimumRewardRate, "Reward rate can't be lower than minimum reward rate");
         rewardRate = _rewardRate;
-        treasuryRate = TOTAL_RATE.sub(_rewardRate);
-
-        emit RatesUpdated(currentEpoch, rewardRate, treasuryRate);
     }
 
-    /**
-     * @dev set treasury rate
-     * callable by admin
-     */
-    function settings_SetTreasuryRate(uint256 _treasuryRate) external onlyAdmin 
-    {
-        require(_treasuryRate <= TOTAL_RATE, "treasuryRate cannot be more than 100%");
-        rewardRate = TOTAL_RATE.sub(_treasuryRate);
-        treasuryRate = _treasuryRate;
 
-        emit RatesUpdated(currentEpoch, rewardRate, treasuryRate);
-    }
-
-    /**
-     * @dev set minBetAmount
-     * callable by admin
-     */
-    function settings_SetMinBetAmount(uint256 _minBetAmount) external onlyAdmin 
+    function settings_SetMinBetAmount(uint256 _minBetAmount) external onlyOwner 
     {
         minBetAmount = _minBetAmount;
 
@@ -733,152 +510,146 @@ contract CandleGenie is Ownable, Pausable {
     }
 
 
-
-    /**
-     * @dev Bet bear position
-     */
-    function user_BetBear() external payable whenNotPaused notContract 
+    function user_BetBull(uint256 epoch) external payable whenNotPaused nonReentrant notContract 
     {
-        require(_bettable(currentEpoch), "Round not bettable");
+        require(epoch == currentEpoch, "Bet is too early/late");
+        require(_bettable(epoch), "Round not bettable");
         require(msg.value >= minBetAmount, "Bet amount must be greater than minBetAmount");
-        require(bet[currentEpoch][msg.sender].amount == 0, "Can only bet once per round");
+        require(Bets[epoch][msg.sender].amount == 0, "Can only bet once per round");
+        require(!Blacklist[msg.sender], "Blacklisted! Are you a bot ?");
 
-        // Update round data
         uint256 amount = msg.value;
-        Round storage round = rounds[currentEpoch];
-        round.totalAmount = round.totalAmount.add(amount);
-        round.bearAmount = round.bearAmount.add(amount);
+        Round storage round = Rounds[epoch];
+        round.bullAmount = round.bullAmount + amount;
 
         // Update user data
-        BetInfo storage betInfo = bet[currentEpoch][msg.sender];
-        betInfo.position = Position.Bear;
-        betInfo.amount = amount;
-        bets[msg.sender].push(currentEpoch);
-
-        emit BetBear(msg.sender, currentEpoch, amount);
-    }
-
-
-    /**
-     * @dev Claim reward
-     */
-    function user_Claim(uint256 epoch) external notContract 
-    {
-        require(rounds[epoch].startBlock != 0, "Round has not started");
-        require(block.number > rounds[epoch].endBlock, "Round has not ended");
-        require(!bet[epoch][msg.sender].claimed, "Rewards claimed");
-
-        uint256 reward;
-        // Round valid, claim rewards
-        if (rounds[epoch].oracleCalled) {
-            require(claimable(epoch, msg.sender), "Not eligible for claim");
-            Round memory round = rounds[epoch];
-            reward = bet[epoch][msg.sender].amount.mul(round.rewardAmount).div(round.rewardBaseCalAmount);
-        }
-        // Round invalid, refund bet amount
-        else {
-            require(refundable(epoch, msg.sender), "Not eligible for refund");
-            reward = bet[epoch][msg.sender].amount;
-        }
-
-        BetInfo storage betInfo = bet[epoch][msg.sender];
-        betInfo.claimed = true;
-        _safeTransferBNB(address(msg.sender), reward);
-
-        emit Claim(msg.sender, epoch, reward);
-    }
-    
-        /**
-     * @dev Bet bull position
-     */
-    function user_BetBull() external payable whenNotPaused notContract 
-    {
-        require(_bettable(currentEpoch), "Round not bettable");
-        require(msg.value >= minBetAmount, "Bet amount must be greater than minBetAmount");
-        require(bet[currentEpoch][msg.sender].amount == 0, "Can only bet once per round");
-
-        // Update round data
-        uint256 amount = msg.value;
-        Round storage round = rounds[currentEpoch];
-        round.totalAmount = round.totalAmount.add(amount);
-        round.bullAmount = round.bullAmount.add(amount);
-
-        // Update user data
-        BetInfo storage betInfo = bet[currentEpoch][msg.sender];
+        BetInfo storage betInfo = Bets[epoch][msg.sender];
         betInfo.position = Position.Bull;
         betInfo.amount = amount;
-        bets[msg.sender].push(currentEpoch);
+        UserBets[msg.sender].push(epoch);
 
         emit BetBull(msg.sender, currentEpoch, amount);
     }
+    
+    
+    function user_BetBear(uint256 epoch) external payable whenNotPaused nonReentrant notContract 
+    {
+        require(epoch == currentEpoch, "Bet is too early/late");
+        require(_bettable(epoch), "Round not bettable");
+        require(msg.value >= minBetAmount, "Bet amount must be greater than minBetAmount");
+        require(Bets[epoch][msg.sender].amount == 0, "Can only bet once per round");
+        require(!Blacklist[msg.sender], "Blacklisted! Are you a bot ?");
+ 
+        uint256 amount = msg.value;
+        Round storage round = Rounds[epoch];
+        round.bearAmount = round.bearAmount + amount;
+
+        // Update user data
+        BetInfo storage betInfo = Bets[epoch][msg.sender];
+        betInfo.position = Position.Bear;
+        betInfo.amount = amount;
+        UserBets[msg.sender].push(epoch);
+
+        emit BetBear(msg.sender, epoch, amount);
+    }
 
 
+    function user_Claim(uint256[] calldata epochs) external nonReentrant notContract 
+    {
+            
+        uint256 reward; // Initializes reward
 
-    /**
-     * @dev Return round epochs that a user has participated
-     */
-    function userBets(address user, uint256 cursor, uint256 size) external view returns (uint256[] memory, uint256) 
+        for (uint256 i = 0; i < epochs.length; i++) {
+            require(Rounds[epochs[i]].startTimestamp != 0, "Round has not started");
+            require(block.timestamp > Rounds[epochs[i]].closeTimestamp, "Round has not ended");
+
+            uint256 addedReward = 0;
+
+            // Round valid, claim rewards
+            if (Rounds[epochs[i]].closed) {
+                require(claimable(epochs[i], msg.sender), "Not eligible for claim");
+                Round memory round = Rounds[epochs[i]];
+                addedReward = (Bets[epochs[i]][msg.sender].amount * round.rewardAmount) / round.rewardBaseCalAmount;
+            }
+            // Round invalid, refund bet amount
+            else {
+                require(refundable(epochs[i], msg.sender), "Not eligible for refund");
+                addedReward = Bets[epochs[i]][msg.sender].amount;
+            }
+
+            Bets[epochs[i]][msg.sender].claimed = true;
+            reward += addedReward;
+
+            emit Claim(msg.sender, epochs[i], addedReward);
+        }
+
+        if (reward > 0) 
+        {
+            _safeTransferBNB(address(msg.sender), reward);
+        }
+        
+    }
+    
+    function getUserRounds(address user, uint256 cursor, uint256 size) external view returns (uint256[] memory, BetInfo[] memory, uint256)
     {
         uint256 length = size;
-        if (length > bets[user].length - cursor) {
-            length = bets[user].length - cursor;
+
+        if (length > UserBets[user].length - cursor) 
+        {
+            length = UserBets[user].length - cursor;
         }
 
         uint256[] memory values = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
-            values[i] = bets[user][cursor + i];
+        BetInfo[] memory betInfo = new BetInfo[](length);
+
+        for (uint256 i = 0; i < length; i++) 
+        {
+            values[i] = UserBets[user][cursor + i];
+            betInfo[i] = Bets[values[i]][user];
         }
 
-        return (values, cursor + length);
+        return (values, betInfo, cursor + length);
+    }
+    
+    function getUserRoundsLength(address user) external view returns (uint256) {
+        return UserBets[user].length;
     }
 
 
-
-    /**
-     * @dev Get the claimable stats of specific epoch and user account
-     */
     function claimable(uint256 epoch, address user) public view returns (bool) 
     {
-        BetInfo memory betInfo = bet[epoch][user];
-        Round memory round = rounds[epoch];
-        if (round.lockPrice == round.closePrice) {
+        BetInfo memory betInfo = Bets[epoch][user];
+        Round memory round = Rounds[epoch];
+        
+        if (round.lockPrice == round.closePrice) 
+        {
             return false;
         }
-        return
-            round.oracleCalled &&
-            ((round.closePrice > round.lockPrice && betInfo.position == Position.Bull) ||
-                (round.closePrice < round.lockPrice && betInfo.position == Position.Bear));
+        
+        return round.closed && !betInfo.claimed && ((round.closePrice > round.lockPrice 
+        && betInfo.position == Position.Bull) || (round.closePrice < round.lockPrice && betInfo.position == Position.Bear));
     }
     
-    
-    /**
-     * @dev Get current block number
-     */
-    function currentBlock() public view returns (uint256) 
+    function refundable(uint256 epoch, address user) public view returns (bool) 
+    {
+        BetInfo memory betInfo = Bets[epoch][user];
+        Round memory round = Rounds[epoch];
+        
+        return !round.closed && !betInfo.claimed && block.timestamp > round.closeTimestamp + bufferSeconds && betInfo.amount != 0;
+    }
+
+
+    function currentBlockNumber() public view returns (uint256) 
     {
         return block.number;
     }
     
-    
-    /**
-     * @dev Check latest oracle round update
-     */
-    function oracleUpdateLock() public view returns (bool)
+    function currentBlockTimestamp() public view returns (uint256) 
     {
-        (uint80 roundId, , , , ) = oracle.latestRoundData();
-        return roundId > oracleLatestRoundId;
+        return block.timestamp;
     }
     
-
-    /**
-     * @dev Get the refundable stats of specific epoch and user account
-     */
-    function refundable(uint256 epoch, address user) public view returns (bool) 
-    {
-        BetInfo memory betInfo = bet[epoch][user];
-        Round memory round = rounds[epoch];
-        return !round.oracleCalled && block.number > round.endBlock.add(bufferBlocks) && betInfo.amount != 0;
-    }
+    
 
    
 }
